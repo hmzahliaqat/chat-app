@@ -1,34 +1,47 @@
 <script setup>
-import { ref } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, usePage } from '@inertiajs/vue3';
 import ChatBox from '@/Components/ChatBox.vue';
 
-const users = ref([
-    { id: 1, name: 'Sarah Mitchell', lastMessage: 'Hey! How are you doing?', time: '10:22 AM', unread: 2, online: true },
-    { id: 2, name: 'James Carter', lastMessage: 'See you tomorrow then!', time: '9:58 AM', unread: 0, online: true },
-    { id: 3, name: 'Lena Torres', lastMessage: 'Can you send me the file?', time: 'Yesterday', unread: 1, online: false },
-    { id: 4, name: 'Noah Bennett', lastMessage: 'Sounds good to me 👍', time: 'Yesterday', unread: 0, online: false },
-    { id: 5, name: 'Ava Simmons', lastMessage: 'I\'ll check and get back to you', time: 'Mon', unread: 0, online: true },
-    { id: 6, name: 'Ethan Brooks', lastMessage: 'Did you see the game last night?', time: 'Mon', unread: 0, online: false },
-    { id: 7, name: 'Mia Nguyen', lastMessage: 'Thanks a lot!', time: 'Sun', unread: 0, online: true },
-    { id: 8, name: 'Lucas Rivera', lastMessage: 'Let me know when you\'re free', time: 'Sun', unread: 3, online: false },
-    { id: 9, name: 'Olivia Hayes', lastMessage: 'Perfect, see you then!', time: 'Sat', unread: 0, online: false },
-    { id: 10, name: 'Mason Clark', lastMessage: 'On my way!', time: 'Sat', unread: 0, online: true },
-    { id: 11, name: 'Isabella Young', lastMessage: 'That makes sense now', time: 'Fri', unread: 0, online: false },
-    { id: 12, name: 'Logan King', lastMessage: 'hahaha no way 😂', time: 'Fri', unread: 0, online: false },
-]);
+const props = defineProps({
+    users: {
+        type: Array,
+        default: () => [],
+    },
+});
 
-const activeUser = ref(users.value[0]);
+const page = usePage();
+const currentUser = computed(() => page.props.auth.user);
+
+const users = ref(props.users);
+const activeUser = ref(users.value[0] ?? null);
 const mobileShowChat = ref(false);
+const search = ref('');
+
+const filteredUsers = computed(() => {
+    const q = search.value.trim().toLowerCase();
+    if (!q) return users.value;
+    return users.value.filter(u =>
+        u.name.toLowerCase().includes(q) ||
+        u.lastMessage.toLowerCase().includes(q)
+    );
+});
 
 const selectUser = (user) => {
     activeUser.value = user;
     mobileShowChat.value = true;
+    user.unread = 0;
 };
 
-const initials = (name) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+const onMessageSent = (message) => {
+    const user = users.value.find(u => u.id === activeUser.value.id);
+    if (user) {
+        user.lastMessage = message.text;
+        user.time = message.time;
+    }
 };
+
+const initials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 const avatarColor = (name) => {
     const colors = ['bg-violet-500', 'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-sky-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500'];
@@ -45,7 +58,7 @@ const avatarColor = (name) => {
 
             <div
                 :class="[
-                    'flex-shrink-0 flex flex-col border-r border-gray-100 bg-white transition-all duration-300',
+                    'flex-shrink-0 flex flex-col border-r border-gray-100 bg-white',
                     'w-full md:w-96',
                     mobileShowChat ? 'hidden md:flex' : 'flex',
                 ]"
@@ -57,6 +70,7 @@ const avatarColor = (name) => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0Z" />
                         </svg>
                         <input
+                            v-model="search"
                             type="text"
                             placeholder="Search…"
                             class="w-full pl-9 pr-3 py-2 text-sm bg-gray-100 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder-gray-400"
@@ -65,13 +79,20 @@ const avatarColor = (name) => {
                 </div>
 
                 <div class="flex-1 overflow-y-auto">
+                    <div v-if="filteredUsers.length === 0" class="flex flex-col items-center justify-center h-full text-gray-400 gap-2 px-6 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                        </svg>
+                        <p class="text-sm">No other users yet</p>
+                    </div>
+
                     <button
-                        v-for="user in users"
+                        v-for="user in filteredUsers"
                         :key="user.id"
                         @click="selectUser(user)"
                         :class="[
                             'w-full flex items-center gap-3 px-4 py-3 transition-colors text-left',
-                            activeUser.id === user.id ? 'bg-indigo-50' : 'hover:bg-gray-50',
+                            activeUser?.id === user.id ? 'bg-indigo-50' : 'hover:bg-gray-50',
                         ]"
                     >
                         <div class="relative flex-shrink-0">
@@ -83,7 +104,7 @@ const avatarColor = (name) => {
 
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
-                                <span :class="['text-sm truncate', activeUser.id === user.id ? 'font-semibold text-indigo-700' : 'font-medium text-gray-800']">
+                                <span :class="['text-sm truncate', activeUser?.id === user.id ? 'font-semibold text-indigo-700' : 'font-medium text-gray-800']">
                                     {{ user.name }}
                                 </span>
                                 <span class="text-[11px] text-gray-400 flex-shrink-0 ml-1">{{ user.time }}</span>
@@ -106,12 +127,21 @@ const avatarColor = (name) => {
                 ]"
             >
                 <ChatBox
+                    v-if="activeUser && currentUser"
                     :key="activeUser.id"
-                    :current-user="{ id: 99, name: 'You' }"
+                    :current-user="currentUser"
                     :recipient="activeUser"
                     :show-back="mobileShowChat"
                     @back="mobileShowChat = false"
+                    @message-sent="onMessageSent"
                 />
+
+                <div v-else class="flex-1 flex flex-col items-center justify-center text-gray-400 gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                    </svg>
+                    <p class="text-sm">Select a conversation</p>
+                </div>
             </div>
 
         </div>
