@@ -1,29 +1,20 @@
-Install backend dependencies:
-Bash
+## Install backend dependencies:
 composer install
-Install frontend dependencies:
-Bash
+## Install frontend dependencies:
 npm install
-Environment Setup
+## Environment Setup
 Copy the environment file:
-Bash
 cp .env.example .env
-Generate application key:
-Bash
+## Generate application key:
 php artisan key:generate
-Configure your database in .env.
-Run migrations and seeder:
-Bash
+## Run migrations and seeder:
 php artisan migrate
 php artisan db:seed
-Running the Application
-Start Laravel server:
-Bash
+## Running the Application
+## Start Laravel server:
 php artisan serve
-Start Vite development server:
-Bash
+## Start Vite development server:
 npm run dev
-Broadcasting & Realtime (Laravel Reverb)
+## Broadcasting & Realtime (Laravel Reverb)
 Start the Reverb server:
-Bash
 php artisan reverb:start
