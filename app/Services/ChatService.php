@@ -59,6 +59,11 @@ class ChatService
         ];
     }
 
+    public function clearConversation(int $userId1, int $userId2): void
+    {
+        Message::conversation($userId1, $userId2)->delete();
+    }
+
     public function markRead(int $receiverId, int $senderId): void
     {
         Message::where('sender_id', $senderId)

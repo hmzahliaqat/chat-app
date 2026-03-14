@@ -8,6 +8,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/messages/{user}', [ChatController::class, 'messages'])->name('chat.messages');
     Route::post('/messages', [ChatController::class, 'send'])->name('chat.send');
+    Route::delete('/messages/{user}', [ChatController::class, 'clear'])->name('chat.clear');
 
     Route::get('/dashboard', fn() => inertia('Dashboard'))->middleware('verified')->name('dashboard');
 

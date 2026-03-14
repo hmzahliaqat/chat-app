@@ -54,6 +54,15 @@ const onMessageSent = (message) => {
     }
 };
 
+const onChatCleared = () => {
+    const user = users.value.find(u => u.id === activeUser.value.id);
+    if (user) {
+        user.lastMessage = 'No messages yet';
+        user.time = '';
+        user.unread = 0;
+    }
+};
+
 const initials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
 const avatarColor = (name) => {
@@ -190,6 +199,7 @@ const avatarColor = (name) => {
                     :show-back="mobileShowChat"
                     @back="mobileShowChat = false"
                     @message-sent="onMessageSent"
+                    @chat-cleared="onChatCleared"
                 />
 
                 <div v-else class="flex-1 flex flex-col items-center justify-center text-gray-400 gap-3">

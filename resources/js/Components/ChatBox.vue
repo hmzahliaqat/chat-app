@@ -17,7 +17,7 @@ const props = defineProps({
     },
 })
 
-const emit = defineEmits(['back', 'messageSent'])
+const emit = defineEmits(['back', 'messageSent', 'chatCleared'])
 
 const messages = ref([])
 const newMessage = ref('')
@@ -25,6 +25,19 @@ const messagesEnd = ref(null)
 const inputRef = ref(null)
 const loading = ref(false)
 const sending = ref(false)
+const optionsOpen = ref(false)
+
+const toggleOptions = (e) => {
+    e.stopPropagation()
+    optionsOpen.value = !optionsOpen.value
+}
+
+const clearChat = async () => {
+    optionsOpen.value = false
+    await axios.delete(`/messages/${props.recipient.id}`)
+    messages.value = []
+    emit('chatCleared')
+}
 
 const initials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
@@ -138,7 +151,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="flex flex-col h-full w-full bg-white overflow-hidden">
+    <div class="flex flex-col h-full w-full bg-white overflow-hidden" @click="optionsOpen = false">
 
         <div class="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
             <button
@@ -159,11 +172,41 @@ onUnmounted(() => {
                 <p class="text-sm font-semibold text-gray-800 truncate">{{ recipient.name }}</p>
                 <p class="text-xs text-gray-400">{{ messages.length }} messages</p>
             </div>
-            <button class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                </svg>
-            </button>
+            <div class="relative">
+                <button
+                    @click="toggleOptions"
+                    class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-50"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                    </svg>
+                </button>
+
+                <Transition
+                    enter-active-class="transition ease-out duration-100"
+                    enter-from-class="opacity-0 scale-95"
+                    enter-to-class="opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75"
+                    leave-from-class="opacity-100 scale-100"
+                    leave-to-class="opacity-0 scale-95"
+                >
+                    <div
+                        v-if="optionsOpen"
+                        class="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden"
+                        @click.stop
+                    >
+                        <button
+                            @click="clearChat"
+                            class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                            Clear Chat
+                        </button>
+                    </div>
+                </Transition>
+            </div>
         </div>
 
         <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50/60">

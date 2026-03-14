@@ -34,6 +34,13 @@ class ChatController extends Controller
         return response()->json($messages);
     }
 
+    public function clear(User $user): JsonResponse
+    {
+        $this->chat->clearConversation(auth()->id(), $user->id);
+
+        return response()->json(null, 204);
+    }
+
     public function send(SendMessageRequest $request): JsonResponse
     {
         $receiverId = $request->integer('receiver_id');
